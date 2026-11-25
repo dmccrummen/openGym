@@ -42,6 +42,7 @@ const mocks = vi.hoisted(() => {
     workoutSettingsSheet: vi.fn(),
     nav: vi.fn(),
     setNoteSheet: vi.fn(),
+    muscleFeedbackSheet: vi.fn(),
     addRest: vi.fn(),
     live: null,
   }
@@ -107,6 +108,7 @@ vi.mock('../sheets.jsx', () => ({
   // sessionNoteSheet during render, so a missing export is a render crash, not a no-op.
   exerciseNoteSheet: vi.fn(),
   setNoteSheet: mocks.setNoteSheet,
+  muscleFeedbackSheet: mocks.muscleFeedbackSheet,
   sessionNoteSheet: vi.fn(),
   renameWorkoutSheet: mocks.renameWorkoutSheet,
   effortPickerSheet: mocks.effortPickerSheet,
@@ -4006,3 +4008,33 @@ describe('a set\'s own form video (v1.4.4)', () => {
   })
 })
 
+
+// Muscle feedback (lib/muscle-feedback.js, a fork feature): the sheet opens once an exercise's last
+// set is ticked, and the workout-complete sheet waits for it after the last exercise.
+describe('muscle feedback after an exercise', () => {
+  it('asks after the last set of an exercise, not before', async () => {
+    await mount([exercise('0025', [true, false]), exercise('0314', [false])], 0, { muscleFeedback: true })
+    expect(mocks.muscleFeedbackSheet).not.toHaveBeenCalled()
+    await toggleSet(1)
+    expect(mocks.muscleFeedbackSheet).toHaveBeenCalledTimes(1)
+    expect(mocks.muscleFeedbackSheet.mock.calls[0].slice(0, 2)).toEqual([0, { muscle: 'chest', sore: false, vol: false }])
+    expect(mocks.muscleFeedbackSheet.mock.calls[0][2]).toBe(null)
+  })
+
+  it('hands the workout-complete sheet to it after the last exercise', async () => {
+    await mount([exercise('0025', [false])], 0, { muscleFeedback: true })
+    await toggleSet(0)
+    expect(mocks.muscleFeedbackSheet).toHaveBeenCalledTimes(1)
+    expect(mocks.muscleFeedbackSheet.mock.calls[0][1]).toEqual({ muscle: 'chest', sore: false, vol: true })
+    expect(mocks.workoutCompleteSheet).not.toHaveBeenCalled()
+    mocks.muscleFeedbackSheet.mock.calls[0][2]()
+    expect(mocks.workoutCompleteSheet).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks nothing with the setting off', async () => {
+    await mount([exercise('0025', [false])])
+    await toggleSet(0)
+    expect(mocks.muscleFeedbackSheet).not.toHaveBeenCalled()
+    expect(mocks.workoutCompleteSheet).toHaveBeenCalledTimes(1)
+  })
+})

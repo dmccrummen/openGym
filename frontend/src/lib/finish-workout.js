@@ -154,6 +154,9 @@ export function buildCompletedWorkout(active, { end = Date.now(), prs = [], snap
       completed.note = note
       if (entry.notePin) completed.notePin = true
     }
+    // Muscle feedback (lib/muscle-feedback.js, a fork feature): kept with the workout, so the
+    // exercise scorecard can read it back. Only when something was answered.
+    if (entry.fb && typeof entry.fb === 'object' && Object.keys(entry.fb).some(k => k !== 'mu')) completed.fb = { ...entry.fb }
     return completed
   }).filter(entry => entry.sets.some(hasCompletedWork))
   // An exercise left without a single set drops out above, and its partner is then a superset

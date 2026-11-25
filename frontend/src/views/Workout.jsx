@@ -41,7 +41,8 @@ import { durationSheet } from '../components/DurationWheel.jsx'
 import { REST_MAX, fmtRest, restWheelValue } from '../lib/duration.js'
 import { youtubeSearchUrl } from '../lib/youtube.js'
 import { openExternal } from '../components/CustomMedia.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, exitWorkoutEdit, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, renameWorkoutSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, addRoutineToSessionSheet, finishWorkoutSheet, finishWorkoutNow, swapActiveWorkoutToBackup, setNoteSheet } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, finishWorkout, exitWorkoutEdit, workoutCompleteSheet, confirmSheet, exerciseNoteSheet, sessionNoteSheet, renameWorkoutSheet, swapActiveWorkoutExercise, barWeightSheet, menuSheet, effortPickerSheet, exerciseHistorySheet, addRoutineToSessionSheet, finishWorkoutSheet, finishWorkoutNow, swapActiveWorkoutToBackup, setNoteSheet, muscleFeedbackSheet } from '../sheets.jsx'
+import { questionsFor, readFeedback } from '../lib/muscle-feedback.js'
 import { afterScrollRestore, scrollRestorePending } from '../components/Modals.jsx'
 import { effortColor } from '../lib/effort.js'
 import Elapsed from '../components/Elapsed.jsx'
@@ -1000,7 +1001,7 @@ function ExerciseBlock({ entryIdx, compact, listed, dense, editing, onToggle, on
     {guidance && onProgressionSettings && <button type="button" className={'progline' + (plan.kind === 'deload' ? ' warn' : '')}
       aria-label={inEx(t('Open exercise settings'))} onClick={onProgressionSettings}>
       <Icon name={plan.kind === 'up' ? 'arrowUp' : plan.kind === 'deload' || plan.prog?.deload ? 'arrowDown' : plan.kind === 'programme' ? 'calendar' : 'lightbulb'} />
-      <span><strong>{t(guidance.policyLabel)}</strong> · {t(...guidance.why)}{guidance.prog?.rpe != null && <> · {t('aim for {0}', (r => `${r.k} ${fmtNum(r.v)}`)(rpeAs(guidance.prog.rpe, effortOf(S))))}</>}</span>
+      <span><strong>{t(guidance.policyLabel)}</strong> · {t(...guidance.why)}{plan.fbWhy && <> · {t(...plan.fbWhy)}</>}{guidance.prog?.rpe != null && <> · {t('aim for {0}', (r => `${r.k} ${fmtNum(r.v)}`)(rpeAs(guidance.prog.rpe, effortOf(S))))}</>}</span>
     </button>}
     {/* The skill ladder (lib/ladders.js): the next rung, and one tap to put it in the routine. */}
     {plan?.kind === 'ladder' && plan.next && EXIDX[plan.next] && <LadderNext entry={entry} next={plan.next} />}
@@ -2263,7 +2264,11 @@ function ActiveWorkout() {
     }, true)
     if (editing) return
     if (checked && !quiet) cheerRecord(idx, i)
-    if (workoutDone) workoutCompleteSheet()
+    // Muscle feedback (lib/muscle-feedback.js, a fork feature): once per exercise, when its last set
+    // is ticked, before the workout-complete sheet when this was the last one.
+    const fbAsk = exJustDone && checked ? questionsFor(useStore.getState().S, idx) : null
+    if (fbAsk && !readFeedback(useStore.getState().S.active?.entries?.[idx]?.fb)) muscleFeedbackSheet(idx, fbAsk, workoutDone ? workoutCompleteSheet : null)
+    else if (workoutDone) workoutCompleteSheet()
     else if (exJustDone && cardioEntry) useUI.getState().toast(t('Cardio logged'))
     else if (exJustDone && m === 'time') useUI.getState().toast(t('Hold logged'))
 

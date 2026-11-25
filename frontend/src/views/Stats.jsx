@@ -25,6 +25,7 @@ import { ChallengesStatsCard } from '../components/Challenges.jsx'
 import { wrappedYears } from '../lib/wrapped.js'
 import { openWrapped, openMonthStory } from '../lib/wrapped-ui.js'
 import DailyFormCard from '../components/DailyFormCard.jsx'
+import FeedbackScorecard from '../components/FeedbackScorecard.jsx'
 import { offeredMonth, monthLabel } from '../lib/month-story.js'
 import { streakInfo } from '../lib/streak.js'
 import { reportSheet } from '../components/ReportSheet.jsx'
@@ -943,6 +944,8 @@ export default function Stats() {
     {workouts.length > 0 && motivationOn && <ChallengesStatsCard S={S} />}
     {/* Daily form (v1.4.5): vitals from the phone's health store and what the check-ins say. */}
     {on('health') && <DailyFormCard S={S} />}
+    {/* Pump against joint pain per exercise, from the muscle feedback (fork feature). */}
+    <FeedbackScorecard S={S} />
     {/* Cardio minutes a week, with a goal if you set one (D#84). */}
     {workouts.length > 0 && <CardioWeekCard S={S} />}
 

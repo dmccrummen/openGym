@@ -4661,3 +4661,6 @@ button.wl-summary{width:100%;padding:0 0 10px;text-align:start;border-radius:var
 
 /* Add set / Warm-up / Remove: 44px tall, the leading glyph on the card's content edge; wrapped siblings share the same edge */
 .wk-add{min-height:44px;margin-inline-start:-14px}
+/* Muscle feedback (components/MuscleFeedback.jsx): the check-in's scale with words for pips */
+.mfb-sub{margin:-2px 0 8px;line-height:1.4}
+.mfb-pip{font-size:var(--fs-footnote);font-weight:600;line-height:1.2;padding:6px 4px;min-height:52px}

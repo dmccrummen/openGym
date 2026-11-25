@@ -1,5 +1,7 @@
 // Hindi UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  // --- muscle feedback (fork) ---
+  "Muscle feedback": "मांसपेशी फ़ीडबैक",
   // --- Settings first screen in groups (#1105) ---
   "Watches": "घड़ियाँ",
   "Set once": "एक बार सेट करें",

@@ -1,5 +1,7 @@
 // Arabic UI strings. Keys are the English source strings (see lib/i18n.js).
 export default {
+  // --- muscle feedback (fork) ---
+  "Muscle feedback": "ملاحظات العضلات",
   // --- Settings first screen in groups (#1105) ---
   "Watches": "الساعات",
   "Set once": "تُضبط مرة واحدة",

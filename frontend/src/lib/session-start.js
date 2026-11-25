@@ -17,6 +17,7 @@ import { todayISO } from './format.js'
 import { exConverted, exView, viewTarget, storedTarget, storedRow } from './ex-unit.js'
 import { warmupSource, warmupModeOf, withWarmupBlock } from './warmup-ramp.js'
 import { withSessionTarget } from './session-targets.js'
+import { setsWithFeedback, holdsForJoint } from './muscle-feedback.js'
 
 /**
  * Where a planned session's reps come from (Settings → During a workout). 'plan', the default:
@@ -132,8 +133,23 @@ function planEntry(stored, cfg, routine, { noProg = false } = {}) {
       prog: { deload: true },
     }
   }
-  // What the rows are built from: the routine's own, with a deload week's fewer sets.
-  const rowCfg = cycle ? { ...cfg, sets: plan.sets } : cfg
+  // Muscle feedback (lib/muscle-feedback.js, a fork feature): a set more or fewer from the last
+  // answers, and the weight held after joint pain. Not in a deload week or a programme, which set
+  // their own numbers, and not under a policy that decides the sets itself (triple progression).
+  const fb = !noProg && !slot && !cycle && !!routine && modeOf(cfg) === 'reps' && !(Array.isArray(cfg.pyramid) && cfg.pyramid.length)
+  if (fb && holdsForJoint(cfg) && plan.kind === 'up') {
+    const lastW = sessionsFor(st, cfg.id, cfg, routine?.id).filter(x => x.mode === 'reps').at(-1)?.weight
+    if (lastW > 0) plan = { ...plan, kind: 'hold', weight: lastW, ...(cfg.reps > 0 ? { reps: cfg.reps } : {}), why: ['Joint pain last time, so the weight stays at {0} for now.', lastW] }
+  }
+  const fbSets = fb && plan.sets == null ? setsWithFeedback(cfg) : null
+  if (fbSets != null && fbSets !== Math.max(1, cfg.sets || 1)) {
+    const base = Math.max(1, cfg.sets || 1)
+    const note = fbSets > base ? ['Your feedback: {0} sets instead of {1}.', fbSets, base] : ['Your feedback: {0} sets instead of {1}, to recover.', fbSets, base]
+    plan = { ...plan, sets: fbSets, fbWhy: note }
+  }
+  // What the rows are built from: the routine's own, with a deload week's fewer sets or the
+  // feedback's set more or fewer.
+  const rowCfg = cycle || plan.fbWhy ? { ...cfg, sets: plan.sets } : cfg
   const policyKind = plan.kind
   if (slot) plan = programmePlan(st, cfg, plan, slot, step)
   const planReps = !startsFromLast(st) || plan.kind === 'programme'

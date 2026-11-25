@@ -720,6 +720,12 @@ export default function Settings({ page = null, find = null, via = null, entryKe
           subtitle={t('Sleep, energy, soreness and stress in four taps before you train. On a rough day it offers to go lighter.')}>
           <Switch aria-label={t('Daily check-in')} checked={S.dailyForm === true} onChange={v => update(s => { s.dailyForm = v })} />
         </Row>}
+        {/* Muscle feedback after each exercise (lib/muscle-feedback.js, a fork feature). */}
+        <Row icon="figureStrength" iconTint="var(--red)" title={t('Muscle feedback')}
+          subtitle={t('After each exercise: pump and joint pain, plus soreness and volume per muscle. Next time that muscle gets a set more or fewer, and joint pain holds the weight.')}>
+          <Switch aria-label={t('Muscle feedback')} checked={S.muscleFeedback === true}
+            onChange={v => update(s => { if (v) s.muscleFeedback = true; else delete s.muscleFeedback })} />
+        </Row>
         {(wakeOK || !MOBILE) && (
           <Row icon="phoneScreen" iconTint="var(--yellow)" title={t('Keep screen awake')}
             subtitle={wakeOK ? t('The screen stays on while a workout is running, so you don’t have to unlock your phone between sets.') : t('Not supported in this browser.')}>

@@ -1,4 +1,6 @@
 export default {
+  // --- muscle feedback (fork) ---
+  "Muscle feedback": "肌肉回饋",
   // --- Settings first screen in groups (#1105) ---
   "Watches": "手錶",
   "Set once": "設定一次",
