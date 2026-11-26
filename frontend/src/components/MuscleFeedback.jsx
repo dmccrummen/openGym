@@ -30,7 +30,7 @@ export default function MuscleFeedback({ ex, ask, initial = {}, onDone, onSkip }
   return <div className="dfc mfb">
     <h3>{t('Feedback')}</h3>
     {ex && <div className={'muted small dfc-sub ' + exerciseNameClass(ex)}>{exerciseNameFor(ex)}</div>}
-    {ask?.sore && <Choice id="mfb-sore" label={t('Soreness')} sub={t('How sore did your {0} get after training it last time?', mu)}
+    {ask?.sore && <Choice id="mfb-sore" label={t('Soreness')} sub={t('How sore did your {0} get after your last session?', mu)}
       options={SORE} value={a.sore} onChange={set('sore')} />}
     <Choice id="mfb-joint" label={t('Joint pain')} sub={t('How did your joints feel during this exercise?')}
       options={JOINT} value={a.joint} onChange={set('joint')} />
