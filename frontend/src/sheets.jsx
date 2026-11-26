@@ -140,7 +140,7 @@ import { checkinMode, withForm, readForm, goLighter, canGoLighter, LIGHTER_KINDS
 import { sleepHoursOn } from './lib/vitals.js'
 import DailyCheckin from './components/DailyCheckin.jsx'
 import MuscleFeedback from './components/MuscleFeedback.jsx'
-import { readFeedback, withFeedback, feedbackChanges, applyFeedbackChanges, feedbackOn } from './lib/muscle-feedback.js'
+import { readFeedback, withFeedback, feedbackChanges, applyFeedbackChanges, feedbackOn, isDeloadSession, deloadResetOn, feedbackOf, resetFeedback } from './lib/muscle-feedback.js'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
@@ -4815,6 +4815,7 @@ function doFinishWorkout({ end: endAt, auto } = {}) {
   const additions = past ? [] : routineAdditions(A, st.routines)
   let shown = w
   let fbChanges = []
+  let fbReset = false
   update(s => {
     if (past) {
       // Its start and end are in the past; the stamp says when it was logged, which is what a
@@ -4833,9 +4834,15 @@ function doFinishWorkout({ end: endAt, auto } = {}) {
       s.workouts.push(w)
       // Muscle feedback (lib/muscle-feedback.js): a set more or fewer, and the joint-pain hold,
       // on the routines this session came from, for the next time they are trained.
+      // A deload session changes nothing from its answers (its sets are cut anyway), and with
+      // "Reset at deload" on it clears every routine's set offsets, so the next block starts over.
       if (feedbackOn(s)) {
-        const changes = feedbackChanges(s, w)
-        if (changes.length) { s.routines = applyFeedbackChanges(s.routines, changes); fbChanges = changes }
+        if (isDeloadSession(A)) {
+          if (deloadResetOn(s) && s.routines.some(r => feedbackOf(r).some(x => x.adj))) { s.routines = resetFeedback(s.routines); fbReset = true }
+        } else {
+          const changes = feedbackChanges(s, w)
+          if (changes.length) { s.routines = applyFeedbackChanges(s.routines, changes); fbChanges = changes }
+        }
       }
     }
     // The run/walk ladder moves up now that the session is saved (lib/circuit.js).
@@ -4857,6 +4864,7 @@ function doFinishWorkout({ end: endAt, auto } = {}) {
   ui().openSheet(close => <FinishSummary w={shown} prs={prs} e1prs={e1prs} additions={additions} close={close} />, { kind: 'center', locked: true, wide: true })
   // What the muscle feedback changed for next time, in one line.
   const moved = fbChanges.filter(c => c.delta)
+  if (fbReset) ui().toast(t('Deload week: your feedback sets are back to your routines’ own for the next block.'), { ms: 6000 })
   if (moved.length) ui().toast(t('Next time: {0}', moved.map(c => exerciseNameFor(EXIDX[c.id] || { id: c.id }) + ' ' + (c.delta > 0 ? '+' : '−') + Math.abs(c.delta) + ' ' + t('set')).join(', ')), { ms: 6000 })
 }
 

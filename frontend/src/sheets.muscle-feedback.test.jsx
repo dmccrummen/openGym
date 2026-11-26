@@ -95,4 +95,33 @@ describe('muscle feedback through a workout', () => {
     act(() => finishWorkoutNow())
     expect(S().routines[0].ex).toEqual([{ id: '0025', sets: 3, reps: 10, weight: 90 }, { id: '0314', sets: 3, reps: 10, weight: 35 }])
   })
+
+  it('a deload session clears the set offsets, keeps the joint holds, and changes nothing from its answers', () => {
+    install()
+    useStore.getState().update(s => {
+      s.routines[0].ex[0].fbAdj = 2
+      s.routines[0].ex[0].fbJoint = true
+      s.routines[0].ex[1].fbAdj = 1
+      s.routines.push({ id: 'rB', name: 'Workout B', ex: [{ id: '0861', sets: 3, reps: 10, fbAdj: -1 }] })
+      for (const e of s.active.entries) e.plan = { kind: 'hold', prog: { deload: true } }
+      s.active.entries[1].fb = { mu: 'chest', sore: 0, vol: 0, pump: 1 }
+    })
+    act(() => finishWorkoutNow())
+    expect(S().routines[0].ex).toEqual([
+      { id: '0025', sets: 3, reps: 10, weight: 90, fbJoint: true },
+      { id: '0314', sets: 3, reps: 10, weight: 35 },
+    ])
+    expect(S().routines[1].ex[0]).toEqual({ id: '0861', sets: 3, reps: 10 })
+  })
+
+  it('keeps the offsets through a deload with the reset switched off', () => {
+    install()
+    useStore.getState().update(s => {
+      s.feedbackDeloadReset = false
+      s.routines[0].ex[1].fbAdj = 1
+      for (const e of s.active.entries) e.plan = { kind: 'hold', prog: { deload: true } }
+    })
+    act(() => finishWorkoutNow())
+    expect(S().routines[0].ex[1].fbAdj).toBe(1)
+  })
 })

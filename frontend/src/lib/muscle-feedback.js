@@ -250,3 +250,40 @@ export function scorecard(workouts, { min = 2 } = {}) {
 }
 
 export const muscleName = slug => MUSCLE_NAME[slug] || slug
+
+// ── Resetting ────────────────────────────────────────────────────────────────────────────────
+// RP runs volume in blocks: sets climb through a block, the deload clears them, and the next block
+// starts from the routine's own again. "Reset at deload" (S.feedbackDeloadReset, on unless false)
+// does that here: finishing a deload session (lib/deload-cycle.js or a programme's deload week)
+// clears every routine's set offsets. Joint-pain holds stay: pain is not volume. A deload session's
+// own answers change nothing, its sets being cut anyway. The routine editor resets one routine.
+
+export const deloadResetOn = S => S?.feedbackDeloadReset !== false
+
+/** Was this session (running or finished) a deload: any exercise in a deload week? */
+export const isDeloadSession = w => (w?.entries || []).some(e => e?.plan?.prog?.deload === true)
+
+/** A routine's exercises the feedback has changed: [{ id, adj, joint }] in routine order. */
+export function feedbackOf(routine) {
+  return (routine?.ex || []).filter(c => c && ((Number(c.fbAdj) || 0) !== 0 || c.fbJoint === true))
+    .map(c => ({ id: c.id, adj: Number(c.fbAdj) || 0, joint: c.fbJoint === true }))
+}
+
+/**
+ * Routines with the feedback cleared: the set offsets, and with `joint` the joint-pain holds too.
+ * `only`: one routine's id, or every routine. Untouched routines and slots stay the same objects.
+ */
+export function resetFeedback(routines, { only = null, joint = false } = {}) {
+  return (routines || []).map(r => {
+    if (!r || (only && r.id !== only)) return r
+    if (!(r.ex || []).some(c => c && ('fbAdj' in c || (joint && 'fbJoint' in c)))) return r
+    return {
+      ...r,
+      ex: r.ex.map(c => {
+        if (!c || !('fbAdj' in c || (joint && 'fbJoint' in c))) return c
+        const { fbAdj, fbJoint, ...rest } = c
+        return joint || fbJoint == null ? rest : { ...rest, fbJoint }
+      }),
+    }
+  })
+}

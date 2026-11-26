@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest'
 import {
   primaryMuscleOf, questionsFor, withFeedback, readFeedback, muscleDelta, feedbackChanges,
   applyFeedbackChanges, setsWithFeedback, holdsForJoint, scorecard, MAX_ADD,
+  resetFeedback, feedbackOf, isDeloadSession, deloadResetOn,
 } from './muscle-feedback.js'
 import { buildSessionEntries } from './session-start.js'
 import { isWarmupRow } from './workout-model.js'
@@ -203,5 +204,40 @@ describe('a session built after feedback', () => {
     const [e] = buildSessionEntries(st, { id: 'rA', prog: 'double', ex: [{ ...base }] })
     expect(work(e)).toHaveLength(3)
     expect(e.plan.fbWhy).toBeUndefined()
+  })
+})
+
+describe('resetting', () => {
+  const rs = () => [
+    { id: 'rA', ex: [{ id: BENCH, sets: 3, fbAdj: 2, fbJoint: true }, { id: INCLINE, sets: 3 }] },
+    { id: 'rB', ex: [{ id: ROW, sets: 3, fbAdj: -1 }] },
+    { id: 'rC', ex: [{ id: CURL, sets: 2 }] },
+  ]
+
+  it('lists what a routine has changed', () => {
+    expect(feedbackOf(rs()[0])).toEqual([{ id: BENCH, adj: 2, joint: true }])
+    expect(feedbackOf(rs()[2])).toEqual([])
+  })
+
+  it('clears every set offset at a deload, keeping the joint-pain holds', () => {
+    const before = rs()
+    const after = resetFeedback(before)
+    expect(after[0].ex[0]).toEqual({ id: BENCH, sets: 3, fbJoint: true })
+    expect(after[1].ex[0]).toEqual({ id: ROW, sets: 3 })
+    expect(after[0].ex[1]).toBe(before[0].ex[1])
+    expect(after[2]).toBe(before[2])
+  })
+
+  it('clears one routine, holds included, from the editor', () => {
+    const after = resetFeedback(rs(), { only: 'rA', joint: true })
+    expect(after[0].ex[0]).toEqual({ id: BENCH, sets: 3 })
+    expect(after[1].ex[0].fbAdj).toBe(-1)
+  })
+
+  it('tells a deload session by its plan, and the reset is on unless switched off', () => {
+    expect(isDeloadSession({ entries: [{ plan: { prog: { deload: true } } }] })).toBe(true)
+    expect(isDeloadSession({ entries: [{ plan: { kind: 'up' } }] })).toBe(false)
+    expect(deloadResetOn({})).toBe(true)
+    expect(deloadResetOn({ feedbackDeloadReset: false })).toBe(false)
   })
 })

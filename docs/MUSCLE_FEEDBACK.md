@@ -42,6 +42,18 @@ When the workout is finished, per muscle answered:
 The workout shows the change on the exercise ("Your feedback: 4 sets instead of 3."), and the
 finish shows a line with what changed.
 
+## Resetting
+
+Feedback sets build up through a block, as in RP. Two ways back to the routine's own sets:
+
+- **Reset at deload** (Settings → Workout, under Muscle feedback; on unless switched off).
+  Finishing a session in a deload week, from Settings → Deload weeks or a programme's deload week,
+  clears every routine's set offsets, so the next block starts over. Joint-pain holds stay.
+  A deload session's own answers change no sets either way.
+- **Reset feedback** in the routine editor: the card lists what the feedback changed in that
+  routine ("5 sets instead of 3 · weight held for joint pain") and resets it, holds included,
+  after a confirm.
+
 ## Exercise scorecard
 
 Stats shows pump against joint pain per exercise. From two answers each exercise gets a verdict:

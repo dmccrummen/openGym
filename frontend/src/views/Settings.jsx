@@ -726,6 +726,11 @@ export default function Settings({ page = null, find = null, via = null, entryKe
           <Switch aria-label={t('Muscle feedback')} checked={S.muscleFeedback === true}
             onChange={v => update(s => { if (v) s.muscleFeedback = true; else delete s.muscleFeedback })} />
         </Row>
+        {S.muscleFeedback === true && <Row icon="reset" iconTint="var(--red)" title={t('Reset at deload')}
+          subtitle={t('Feedback sets build up through a block. A deload week clears them, so the next block starts from your routines’ own sets.')}>
+          <Switch aria-label={t('Reset at deload')} checked={S.feedbackDeloadReset !== false}
+            onChange={v => update(s => { if (v) delete s.feedbackDeloadReset; else s.feedbackDeloadReset = false })} />
+        </Row>}
         {(wakeOK || !MOBILE) && (
           <Row icon="phoneScreen" iconTint="var(--yellow)" title={t('Keep screen awake')}
             subtitle={wakeOK ? t('The screen stays on while a workout is running, so you don’t have to unlock your phone between sets.') : t('Not supported in this browser.')}>

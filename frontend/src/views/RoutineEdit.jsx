@@ -26,6 +26,7 @@ import { copyRoutine, deleteRoutine, replaceSlotExercise } from '../lib/routines
 import { markEntryUndone } from '../lib/sync-merge.js'
 import { speedUnitOf } from '../lib/speed.js'
 import { POLICIES_FOR, POLICY_NAME, POLICY_DESC, profileRule } from '../lib/progression.js'
+import { feedbackOn, feedbackOf, resetFeedback } from '../lib/muscle-feedback.js'
 import BodyMap from '../components/BodyMap.jsx'
 import { loadOfRoutine, rankOf, MUSCLE_NAME } from '../lib/muscles.js'
 import { viewTarget, exUnitOf } from '../lib/ex-unit.js'
@@ -540,6 +541,29 @@ export default function RoutineEdit() {
         ? t('A deload routine opens at the numbers set here, so the progression above does not apply to it.') + ' ' + t('The next regular target continues from the last included workout.')
         : t(POLICY_DESC[r.prog || profileRule(S)] || POLICY_DESC.linear) + ' ' + t('Applies to every exercise in this routine that does not set its own rule.')}
     </div>
+
+    {/* What muscle feedback (lib/muscle-feedback.js, a fork feature) has changed in this routine,
+        and a reset back to its own sets. */}
+    {feedbackOn(S) && feedbackOf(r).length > 0 && <div className="card" data-routine-feedback style={{ marginBottom: 16 }}>
+      <div className="lbl" style={{ marginBottom: 6 }}>{t('Muscle feedback')}</div>
+      {feedbackOf(r).map(f => {
+        const ex = exOr(f.id)
+        const base = Math.max(1, Number(r.ex.find(c => c.id === f.id)?.sets) || 1)
+        return <div key={f.id} className="row" style={{ justifyContent: 'space-between', gap: 8, padding: '4px 0' }}>
+          <span className={exerciseNameClass(ex)}>{exerciseNameFor(ex)}</span>
+          <span className="small muted" style={{ textAlign: 'right' }}>{[
+            f.adj ? t('{0} sets instead of {1}', base + f.adj, base) : null,
+            f.joint ? t('weight held for joint pain') : null,
+          ].filter(Boolean).join(' · ')}</span>
+        </div>
+      })}
+      <div style={{ marginTop: 10 }}>
+        <Button size="sm" variant="ghost" onClick={() => confirmSheet({
+          title: t('Reset feedback?'), message: t('Every exercise in “{0}” goes back to its own sets, and joint-pain holds are cleared.', r.name), confirmText: t('Reset'),
+          onConfirm: () => { update(s => { s.routines = resetFeedback(s.routines, { only: id, joint: true }) }); toast(t('Feedback reset.')) },
+        })}>{t('Reset feedback')}</Button>
+      </div>
+    </div>}
 
     {missingCount > 0 && <div className="card" style={{ marginBottom: 16, borderColor: 'var(--orange)' }}>
       <div className="row" style={{ gap: 8, alignItems: 'center' }}>
